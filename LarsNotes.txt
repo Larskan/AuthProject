@@ -1,0 +1,45 @@
+﻿Editor: Edit and delete articles
+Editor: Edit and delete user comments
+
+Writer: Create and edit OWN articles
+
+Subscriber: Comment on articles
+
+Guest: Read articles
+
+Already contains barebones.
+Starter project uses SQLite, which is fine for proof of concept, but if this was a real project, I likely should use SQL
+Look into: Authorization with API using .NET Core.
+Change the methods to async where it makes sense to practice the good practice.
+Trying to add [Authorize(Roles = Roles.Subscriber)] to HttpPost, created an error
+  * Reason for error: Attributes in C# need constants at compile, while Subscriber was a static field.
+  * Replaced the static readonly with const
+
+DTO: Data Transfer Object, transfer data between layers in an app, from the API in this case.
+Why use it?
+  * Prevents exposing internal database details
+  * Avoids sending fields like passwords
+  * API responses are structured
+  * Changes in DB wont break API
+DTO stuff
+  * ArticleDTO: Return articles in API responses, converts Article(Entity) to simplified object
+  * ArticleDTO: in Controller, it returns the DTO with the data instead of raw Article entity
+  * ArticleFormDTO: Receive data when creating or updating articles
+  * ArticleFormDTO: In HttpPost in Controller, it accepts only Title and Content from DTO, preventing users from deciding CreatedAt and Author.
+  * CommentDTO: Includes comment details and author info
+  * CommentDTO: In Controller, HttpGet: Only req fields(id, content, articleid, author) are sent, and no db fields
+  * CommentFormDTO: For submitting comments, prevents modifying restricted fields
+  * CommentFormDTO: Controller, HttpPost, Ensures only Content and ArticleID is given by user
+Essentially the ArticleDTO and CommentDTO are responseDTO, they structure API Responses.
+Essentially the ArticleFormDTO and CommentFormDTO control what data users can submit.
+
+We have the users:
+        var editor = await CreateUser("editor", "S3cret!", Roles.Editor);
+        var writer = await CreateUser("writer", "S3cret!", Roles.Writer);
+        var anotherWriter = await CreateUser("anotherWriter", "S3cret!", Roles.Writer);
+        var subscriber = await CreateUser("subscriber", "S3cret!", Roles.Subscriber);
+It is with those we test if we coded it right.
+
+Own guide:
+Run the guide, login with above user, see if a user can do something they arent supposed to. 
+

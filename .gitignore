@@ -1,0 +1,7 @@
+bin/
+obj/
+.idea/
+app/
+db.sqlite*
+.vs/
+*.vspscc
