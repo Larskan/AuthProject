@@ -40,6 +40,9 @@ We have the users:
         var subscriber = await CreateUser("subscriber", "S3cret!", Roles.Subscriber);
 It is with those we test if we coded it right.
 
+- The JWTBearer Namespace
+https://learn.microsoft.com/en-us/dotnet/api/microsoft.aspnetcore.authentication.jwtbearer?view=aspnetcore-9.0
+
 Own guide:
 Run the guide, login with above user, see if a user can do something they arent supposed to. 
 

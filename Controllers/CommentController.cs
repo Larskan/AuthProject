@@ -20,25 +20,29 @@ public class CommentController : ControllerBase
         this.db = ctx;
         this.userManager = userManager;
     }
-
+    #region GET
     [HttpGet]
-    public IEnumerable<CommentDto> Get([FromQuery] int? articleId)
+    public async Task<IEnumerable<CommentDto>> Get([FromQuery] int? articleId)
     {
         var query = db.Comments.Include(x => x.Author).AsQueryable();
+
         if (articleId.HasValue)
             query = query.Where(c => c.ArticleId == articleId);
-        return query.Select(CommentDto.FromEntity);
-    }
 
-    [HttpGet(":id")]
-    public CommentDto? GetById(int id)
+        var comments = await query.ToListAsync();
+        return comments.Select(CommentDto.FromEntity);
+    }
+    
+    [HttpGet("{id}")]
+    public async Task<ActionResult<CommentDto>> GetById(int id)
     {
-        return db
-            .Comments.Include(x => x.Author)
-            .Select(CommentDto.FromEntity)
-            .SingleOrDefault(x => x.Id == id);
+        var comment = await db.Comments.Include(x => x.Author).SingleOrDefaultAsync(x => x.Id == id);
+        if (comment == null) return NotFound();
+        return CommentDto.FromEntity(comment);
     }
+    #endregion GET
 
+    #region POST
     [HttpPost]
     [Authorize(Roles = Roles.Subscriber)]
     public async Task<ActionResult<CommentDto>> Post([FromBody] CommentFormDto dto)
@@ -60,7 +64,45 @@ public class CommentController : ControllerBase
         db.SaveChanges();
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, CommentDto.FromEntity(entity));
     }
+    #endregion POST
 
+    #region PUT
+    [HttpPut(":id")]
+    [Authorize]
+    public async Task<ActionResult<CommentDto>> Put(int id, [FromBody] CommentFormDto dto)
+    {
+        var user = await userManager.GetUserAsync(HttpContext.User);
+        if (user == null) return Unauthorized();
+
+        var comment = db.Comments.Include(x => x.Author).FirstOrDefault(x => x.Id == id);
+        if (comment == null) return NotFound();
+
+        if (User.IsInRole(Roles.Editor) || comment.Author.Id == user.Id) // Editors OR Comment Owners can edit
+        {
+            comment.Content = dto.Content;
+            db.SaveChanges();
+            return CommentDto.FromEntity(comment);
+        }
+
+        return Forbid();
+    }
+    #endregion PUT
+
+    #region DELETE
+    [HttpDelete("{id}")]
+    [Authorize(Roles = Roles.Editor)] // Only Editors can delete comments
+    public async Task<ActionResult> Delete(int id)
+    {
+        var comment = await db.Comments.FirstOrDefaultAsync(x => x.Id == id);
+        if (comment == null) return NotFound();
+
+        db.Comments.Remove(comment);
+        await db.SaveChangesAsync();
+        return NoContent();
+    }
+    #endregion DELETE
+
+    #region Ramus Code
     //[HttpPost]
     //public CommentDto Post([FromBody] CommentFormDto dto)
     //{
@@ -91,36 +133,15 @@ public class CommentController : ControllerBase
     //    db.SaveChanges();
     //    return CommentDto.FromEntity(updated);
     //}
-    [HttpPut(":id")]
-    [Authorize]
-    public async Task<ActionResult<CommentDto>> Put(int id, [FromBody] CommentFormDto dto)
-    {
-        var user = await userManager.GetUserAsync(HttpContext.User);
-        if (user == null) return Unauthorized();
 
-        var comment = db.Comments.Include(x => x.Author).FirstOrDefault(x => x.Id == id);
-        if (comment == null) return NotFound();
-
-        if (User.IsInRole(Roles.Editor) || comment.Author.Id == user.Id) // Editors OR Comment Owners can edit
-        {
-            comment.Content = dto.Content;
-            db.SaveChanges();
-            return CommentDto.FromEntity(comment);
-        }
-
-        return Forbid();
-    }
-
-    [HttpDelete("{id}")]
-    [Authorize(Roles = Roles.Editor)] // Only Editors can delete comments
-    public ActionResult Delete(int id)
-    {
-        var comment = db.Comments.FirstOrDefault(x => x.Id == id);
-        if (comment == null) return NotFound();
-
-        db.Comments.Remove(comment);
-        db.SaveChanges();
-        return NoContent();
-    }
+    //[HttpGet(":id")]
+    //public CommentDto? GetById(int id)
+    //{
+    //    return db
+    //        .Comments.Include(x => x.Author)
+    //        .Select(CommentDto.FromEntity)
+    //        .SingleOrDefault(x => x.Id == id);
+    //}
+    #endregion Ramus Code
 
 }

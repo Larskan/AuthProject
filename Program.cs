@@ -23,14 +23,14 @@ builder.Services.AddControllers();
 //JWT Auth Config
 builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJwtBearer(options =>
 {
-    options.RequireHttpsMetadata = false;
-    options.SaveToken = true;
+    options.RequireHttpsMetadata = false; //true would require HTTPS, false for development
+    options.SaveToken = true; //Save token in server
     options.TokenValidationParameters = new TokenValidationParameters
     {
-        ValidateIssuer = true,
-        ValidateAudience = true,
-        ValidateLifetime = true,
-        ValidateIssuerSigningKey = true,
+        ValidateIssuer = true, //Good practice, that its a trusted source, false is if you only need token signature
+        ValidateAudience = true,//Good practice, ensures its intended for the API, false is for multiple clients or public use
+        ValidateLifetime = true, //False means token never expires, bad security practice
+        ValidateIssuerSigningKey = true, //Good practice, ensures token is signed with a key, false is no security
         ValidIssuer = builder.Configuration["Jwt:Issuer"],
         ValidAudience = builder.Configuration["Jwt:Audience"],
         IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(builder.Configuration["Jwt:SecretKey"]))
@@ -38,31 +38,26 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme).AddJw
 });
 
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-//builder.Services.AddEndpointsApiExplorer();
+
+//Adds a place to enter tokens in Right corner of UI
 builder.Services.AddSwaggerGen(options =>
 {
-    options.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
-    {
-        Name = "Authorization",
-        Type = SecuritySchemeType.Http,
-        Scheme = "Bearer",
-        BearerFormat = "JWT",
-        In = ParameterLocation.Header,
-        Description = "Enter 'Bearer {token}'"
-    });
+    //Instance of OpenApiSecurityScheme, defines authentication in Swagger
+    var securityScheme = new OpenApiSecurityScheme 
+    { 
+        Name = "Authorization", //Header where token is expected
+        Type = SecuritySchemeType.Http,//Specifies we are using HTTP Auth
+        Scheme = "Bearer", //Type of Auth is Bearer Token, used in JWT Auth
+        BearerFormat = "JWT", //Token is Json Web Token(JWT)
+        In = ParameterLocation.Header,//Tells swagger that token must be sent in HTTP request header
+        Description = "Enter 'Bearer {token}'" //Instruction to swagger UI on how to provide token
+    };
+    //Add field for entering token
+    options.AddSecurityDefinition("Bearer", securityScheme);
     options.AddSecurityRequirement(new OpenApiSecurityRequirement
     {
-        {
-            new OpenApiSecurityScheme
-            {
-                Reference = new OpenApiReference
-                {
-                    Type = ReferenceType.SecurityScheme,
-                    Id = "Bearer"
-                }
-            },
-            new string[]{}
-        }
+        //Indicates that the Bearer token scheme is applicable to all endpoints
+        {securityScheme, new string[] { }}
     });
 });
 
@@ -89,7 +84,7 @@ app.UseSwaggerUI();
 
 app.UseHttpsRedirection();
 
-//Auth middleware, auth requests using JWT
+//Auth middleware, auth requests using JWT..ALWAYS BEFORE AUTHORIZATION
 app.UseAuthentication();
 
 app.UseAuthorization();

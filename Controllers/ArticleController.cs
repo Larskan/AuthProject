@@ -21,30 +21,29 @@ public class ArticleController : ControllerBase
         this.userManager = userManager;
     }
 
+    #region GET
     [HttpGet]
-    public IEnumerable<ArticleDto> Get()
+    public async Task<IEnumerable<ArticleDto>> Get()
     {
-        return db.Articles.Include(x => x.Author).Select(ArticleDto.FromEntity);
+        //db.Articles is the articles table in DB
+        //Include(x => x.Author) is to include the author of the article
+        //ToListAsync() executes the query and returns the result as a list
+        var articles = await db.Articles.Include(x => x.Author).ToListAsync();
+        //Select(ArticleDto.FromEntity) maps each article to an ArticleDto
+        //Select() works like a for loop, it goes through each article
+        return articles.Select(ArticleDto.FromEntity);
     }
 
     [HttpGet("{id}")]
-    public ActionResult<ArticleDto> GetById(int id)
+    public async Task<ActionResult<ArticleDto>> GetById(int id)
     {
-        var article = db.Articles.Include(x => x.Author).FirstOrDefault(x => x.Id == id);
+        var article = await db.Articles.Include(x => x.Author).FirstOrDefaultAsync(x => x.Id == id);
         if (article == null) return NotFound();
         return ArticleDto.FromEntity(article);
     }
+    #endregion GET
 
-    //[HttpGet(":id")]
-    //public ArticleDto? GetById(int id)
-    //{
-    //    return db
-    //        .Articles.Include(x => x.Author)
-    //        .Where(x => x.Id == id)
-    //        .Select(ArticleDto.FromEntity)
-    //        .SingleOrDefault();
-    //}
-
+    #region POST
     [HttpPost]
     [Authorize(Roles = Roles.Writer)]
     public async Task<ActionResult<ArticleDto>> Post([FromBody] ArticleFormDto dto)
@@ -63,24 +62,9 @@ public class ArticleController : ControllerBase
         db.SaveChanges();
         return CreatedAtAction(nameof(GetById), new { id = entity.Id }, ArticleDto.FromEntity(entity));
     }
+    #endregion POST
 
-    //[HttpPost]
-    //public ArticleDto Post([FromBody] ArticleFormDto dto)
-    //{
-    //    var userName = HttpContext.User.Identity?.Name;
-    //    var author = db.Users.Single(x => x.UserName == userName);
-    //    var entity = new Article
-    //    {
-    //        Title = dto.Title,
-    //        Content = dto.Content,
-    //        Author = author,
-    //        CreatedAt = DateTime.Now
-    //    };
-    //    var created = db.Articles.Add(entity).Entity;
-    //    db.SaveChanges();
-    //    return ArticleDto.FromEntity(created);
-    //}
-
+    #region PUT
     [HttpPut(":id")]
     [Authorize]
     public async Task<ActionResult<ArticleDto>> Put(int id, [FromBody] ArticleFormDto dto)
@@ -101,16 +85,75 @@ public class ArticleController : ControllerBase
         }
         return Forbid();
     }
+    #endregion PUT
 
+    #region DELETE
     [HttpDelete("{id}")]
     [Authorize(Roles = Roles.Editor)] // Only Editors can delete articles
-    public ActionResult Delete(int id)
+    public async Task<ActionResult> Delete(int id)
     {
-        var article = db.Articles.FirstOrDefault(x => x.Id == id);
+        var article = await db.Articles.FirstOrDefaultAsync(x => x.Id == id);
         if (article == null) return NotFound();
 
         db.Articles.Remove(article);
-        db.SaveChanges();
+        await db.SaveChangesAsync();
         return NoContent();
     }
+
+    #endregion DELETE
+
+    #region Rasmus Code
+    //[HttpGet]
+    //public IEnumerable<ArticleDto> Get()
+    //{
+    //    return db.Articles.Include(x => x.Author).Select(ArticleDto.FromEntity);
+    //}
+
+    //[HttpGet("{id}")]
+    //public ActionResult<ArticleDto> GetById(int id)
+    //{
+    //    var article = db.Articles.Include(x => x.Author).FirstOrDefault(x => x.Id == id);
+    //    if (article == null) return NotFound();
+    //    return ArticleDto.FromEntity(article);
+    //}
+
+    //[HttpGet(":id")]
+    //public ArticleDto? GetById(int id)
+    //{
+    //    return db
+    //        .Articles.Include(x => x.Author)
+    //        .Where(x => x.Id == id)
+    //        .Select(ArticleDto.FromEntity)
+    //        .SingleOrDefault();
+    //}
+
+    //[HttpPost]
+    //public ArticleDto Post([FromBody] ArticleFormDto dto)
+    //{
+    //    var userName = HttpContext.User.Identity?.Name;
+    //    var author = db.Users.Single(x => x.UserName == userName);
+    //    var entity = new Article
+    //    {
+    //        Title = dto.Title,
+    //        Content = dto.Content,
+    //        Author = author,
+    //        CreatedAt = DateTime.Now
+    //    };
+    //    var created = db.Articles.Add(entity).Entity;
+    //    db.SaveChanges();
+    //    return ArticleDto.FromEntity(created);
+    //}
+    //[HttpDelete("{id}")]
+    //[Authorize(Roles = Roles.Editor)] // Only Editors can delete articles
+    //public ActionResult Delete(int id)
+    //{
+    //    var article = db.Articles.FirstOrDefault(x => x.Id == id);
+    //    if (article == null) return NotFound();
+
+    //    db.Articles.Remove(article);
+    //    db.SaveChanges();
+    //    return NoContent();
+    //}
+
+    #endregion Rasmus Code
 }
