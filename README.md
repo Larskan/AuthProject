@@ -23,4 +23,5 @@ Go to Login and enter your user type as the email and insert the password.
 Execute.
 Copy the revealed accessToken
 Go up in top right corner in Authorize and insert your token.
+Explore your Access
 ```
