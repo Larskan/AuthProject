@@ -6,9 +6,9 @@ Make sure to run using https:
 ```bash
 Use the button in your C# IDE to run without debugging(or with)
 ```
-Go to the REST API:
+HTTPS for REST API:
 ```bash
-https://localhost:7000/swagger/index.html
+https://localhost:7023/swagger/index.html
 ```
 
 ## Usage
