@@ -18,7 +18,8 @@ Go to DbSeeder.cs and pick a user.
 
 # Guest: GET Articles
 # Subscriber: POST Comment on Articles
-#
+# Writer: POST Articles and DELETE own Articles
+# Editor: PUT and DELETE Comments and Articles
 Go to Login and enter your user type as the email and insert the password.
 Execute.
 Copy the revealed accessToken
