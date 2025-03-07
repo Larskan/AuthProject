@@ -4,15 +4,23 @@
 Copy the Repository and save it the desired location on your PC
 Make sure to run using https:
 ```bash
-dotnet run --launch-profile https
+Use the button in your C# IDE to run without debugging(or with)
 ```
 Go to the REST API:
 ```bash
-https://localhost:7023/swagger/index.html
+https://localhost:7000/swagger/index.html
 ```
 
 ## Usage
 ```C#
 # Locate the types of users
-Go to DbSeeder.cs
+Go to DbSeeder.cs and pick a user.
+
+# Guest: GET Articles
+# Subscriber: POST Comment on Articles
+#
+Go to Login and enter your user type as the email and insert the password.
+Execute.
+Copy the revealed accessToken
+Go up in top right corner in Authorize and insert your token.
 ```
